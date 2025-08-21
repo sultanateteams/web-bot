@@ -1,16 +1,16 @@
 <template>
   <div class="mb-3">
     <label :for="id" class="form-label">{{ title }}</label>
+
     <b-form-input
       class="w-100"
       :id="id"
-      :value="modelValue"
-      @input="updateValue"
+      v-model="modelValueProxy"
       :state="validationState"
-      :type="type"
-    ></b-form-input>
+      :type="supportedType"
+    />
 
-    <b-form-invalid-feedback v-if="required" :state="validationState">
+    <b-form-invalid-feedback v-if="required && !validationState">
       {{ errorMessage }}
     </b-form-invalid-feedback>
   </div>
@@ -19,9 +19,8 @@
 <script lang="ts" setup>
 import { computed, defineProps, defineEmits } from "vue";
 
-// Props
 const props = defineProps<{
-  modelValue: string;
+  modelValue: string | number | null;
   id: string;
   title: string;
   required?: boolean;
@@ -30,17 +29,47 @@ const props = defineProps<{
 
 const emit = defineEmits(["update:modelValue"]);
 
-function updateValue(value: string) {
-  emit("update:modelValue", value);
-}
+// Proxy orqali modelValue bilan bevosita ishlash
+const modelValueProxy = computed({
+  get: () => props.modelValue ?? "",
+  set: (val: string | number) => emit("update:modelValue", val)
+});
 
-// Validatsiya sharti: faqat `required == true` bo‘lsa
+// Ruxsat etilgan input typelar
+const allowedTypes = [
+  "text",
+  "password",
+  "email",
+  "number",
+  "url",
+  "tel",
+  "search",
+  "range",
+  "date",
+  "time",
+  "color"
+];
+
+const supportedType = computed(() =>
+  allowedTypes.includes(props.type) ? props.type : "text"
+);
+
+// Validatsiya
 const validationState = computed(() => {
-  if (!props.required) return null; // validatsiya yo‘q
-  return props.modelValue.length >= 3 && props.modelValue.length <= 100;
+  if (!props.required) return null;
+  const val = String(modelValueProxy.value).trim();
+
+  if (supportedType.value === "number") {
+    return !isNaN(Number(val));
+  }
+
+  return val.length >= 3 && val.length <= 100;
 });
 
 const errorMessage = computed(() => {
+  if (supportedType.value === "number") {
+    return "Faqat raqam bo‘lishi kerak.";
+  }
   return "Matn 3 dan 100 belgigacha bo‘lishi kerak.";
 });
 </script>

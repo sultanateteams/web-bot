@@ -25,7 +25,7 @@ import InputMask from "primevue/inputmask";
 import FloatLabel from "primevue/floatlabel";
 
 const props = defineProps<{
-  modelValue: string;
+  modelValue: string | number;
   id: string;
   title: string;
   required?: boolean;
